@@ -1,6 +1,7 @@
 package com.qa.cucumber;
 
 
+import com.sun.org.apache.xpath.internal.functions.FuncFalse;
 import cucumber.api.java.After;
 import cucumber.api.java.Before;
 import cucumber.api.java.en.Given;
@@ -15,9 +16,11 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.io.FileNotFoundException;
 import java.util.concurrent.TimeUnit;
 
 import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 
 import java.io.FileInputStream;
@@ -26,33 +29,40 @@ import java.io.InputStream;
 import java.util.Properties;
 
 public class AmazonSearchSteps {
-    private WebDriver driver;
+    private WebDriver driver = null;
     private WebDriverWait webDriverWait;
     private Properties prop = new Properties();
+    private String sutUrl = null;
 
     @Before
-    public void before() {
-        // System.setProperty("webdriver.chrome.driver", "C:\\Opt\\WebDriver\\chromedriver.exe");
-        try {
-            prop.load(new FileInputStream("config.properties"));
-            System.setProperty("webdriver.chrome.driver", prop.getProperty("webdriver.chrome.driver"));
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
+    public void setUp() throws IOException {
+        prop.load(new FileInputStream("config.properties"));
+
+        sutUrl = prop.getProperty("sut.url");
+        String driverPathStr = prop.getProperty("webdriver.chrome.driver");
+        String timeOutStr = prop.getProperty("sut.timeout");
+
+        // check the test configuration
+        assertNotNull("webdriver.chrome.driver property is null", driverPathStr);
+        assertNotNull("sut.timeout property is null", timeOutStr);
+        assertNotNull("sut.url is null", sutUrl);
+
+        System.setProperty("webdriver.chrome.driver", driverPathStr);
+        int timeOut = Integer.parseInt(timeOutStr);
 
         driver = new ChromeDriver();
-        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-        webDriverWait = new WebDriverWait(driver, 10);
+        driver.manage().timeouts().implicitlyWait(timeOut, TimeUnit.SECONDS);
+        webDriverWait = new WebDriverWait(driver, timeOut);
     }
 
     @After
-    public void after() {
-        driver.quit();
+    public void tearDown() {
+        if (driver != null) driver.quit();
     }
 
-    @Given("^Open Amazon site at '(.*?)'$")
-    public void openSite(String url) {
-        driver.navigate().to(url);
+    @Given("^Site Under Test is accessible$")
+    public void openSite() {
+        driver.navigate().to(sutUrl);
     }
 
     @When("^Enter the search term '(.*?)'$")

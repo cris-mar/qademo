@@ -12,8 +12,7 @@ import cucumber.api.junit.Cucumber;
                 "html:target/cucumber/amazon.html",
                 "pretty"
         },
-        features = {"Feature"},
-        tags = {"~@ignored"}
+        features = {"Feature"}
 )
 public class RunAmazonSearchTest {
 }
